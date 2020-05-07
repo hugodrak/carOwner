@@ -21,7 +21,7 @@ def get_owner(reg_nr: str):
         splitted = owner_url.split('/')
         ort = unquote(splitted[4])
         name_split = splitted[5].split('-')
-        name = unquote(" ".join(name_split[0:-2]))
+        name = unquote(" ".join(name_split[0:-1]))
         year = name_split[-1]
         car = soup.find_all('h1', {"class": "card-title"})[0].text
         owner = {'car': car, 'ort': ort, 'name': name, 'birth_year': year, 'url': owner_url}
