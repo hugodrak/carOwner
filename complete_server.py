@@ -35,8 +35,8 @@ def make_html(owner):
 <head>
   <meta charset="utf-8">
 
-  <title>The HTML5 Herald</title>
-  <meta name="description" content="The HTML5 Herald">
+  <title>Car Owner Sweden</title>
+  <meta name="description" content="Car Owner Sweden">
   <meta name="author" content="SitePoint">
 </head>
 
@@ -71,19 +71,24 @@ class Server(BaseHTTPRequestHandler):
     # GET sends back a Hello world message
     def do_GET(self):
         self._set_headers()
-        content = self.handle_http()
+        raw_content = self.handle_http()
         if self.path[:4] == "/api":
-            self.wfile.write(json.dumps(content).encode('utf-8'))
+            self.wfile.write(json.dumps(raw_content).encode('utf-8'))
         else:
-            self.wfile.write(make_html(content).encode('utf-8'))
+            if type(raw_content) == dict:
+                content = make_html(raw_content)
+            elif type(raw_content) == str:
+                content = raw_content
+            else:
+                return 0
+            self.wfile.write(content.encode('utf-8'))
 
 
     def handle_http(self):
         if self.path == "/":
-            to_user = {"Hello World": "ok"}
+            to_user = "Hello World\n Please use /regnum or /api/regnum"
         else:
-            to_user = {"car": "Ford Fiesta 1.4 i", "ort": "Trollhättan", "name": "Krister Joakim Berg", "birth_year": "1968", "url": "http://www.merinfo.se/person/Trollh%C3%A4ttan/Krister-Joakim-Berg-1968/bptl7-2m8y8?utm_source=biluppgifter&utm_medium=owner&utm_term=person"}
-            #to_user = get_owner(self.path.replace("/", ""))
+            to_user = get_owner(self.path.replace("/", ""))
 
         return to_user
 
