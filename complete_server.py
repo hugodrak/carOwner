@@ -19,39 +19,87 @@ def get_owner(reg_nr: str):
     if len(soup.find_all('a', {"class": "gtm-merinfo"})) > 0:
         owner_url = soup.find_all('a', {"class": "gtm-merinfo"})[0]['href']
         splitted = owner_url.split('/')
-        ort = unquote(splitted[4])
-        name_split = splitted[5].split('-')
-        name = unquote(" ".join(name_split[0:-1]))
-        year = name_split[-1]
-        car = soup.find_all('h1', {"class": "card-title"})[0].text
-        owner = {'car': car, 'ort': ort, 'name': name, 'birth_year': year, 'url': owner_url}
+        polis = False
+        if splitted[3] == "person":
+            ort = unquote(splitted[4])
+            name_split = splitted[5].split('-')
+            name = unquote(" ".join(name_split[0:-1]))
+            year = name_split[-1]
+            car = soup.find_all('h1', {"class": "card-title"})[0].text
+            owner = {'car': car, 'ort': ort, 'name': name, 'birth_year': year, 'url': owner_url, 'reg': reg_nr.upper()}
+        elif splitted[3] == "foretag":
+            name_split = splitted[4].split('-')
+            if name_split[-1] == "2021000076":
+                polis = True
+            name = unquote(" ".join(name_split))
+            car = soup.find_all('h1', {"class": "card-title"})[0].text
+            owner = {'car': car, 'name': name, 'url': owner_url, 'reg': reg_nr.upper()}
+            if polis:
+                owner["polis"] = True
+        else:
+            owner = {"null": "null"}
         return owner
+    else:
+        return {"null": "regnr not found"}
 
 def make_html(owner):
-    out = f"""
-    <!doctype html>
+    if "null" not in owner.keys():
+        if "ort" in owner.keys():
+            out = f"""
+            <!doctype html>
 
-<html lang="en">
-<head>
-  <meta charset="utf-8">
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
 
-  <title>Car Owner Sweden</title>
-  <meta name="description" content="Car Owner Sweden">
-  <meta name="author" content="SitePoint">
-</head>
+          <title>Car Owner Sweden</title>
+          <meta name="description" content="Car Owner Sweden">
+          <meta name="author" content="SitePoint">
+        </head>
 
-<body>
-    <h1>CarOwner</h1>
-    <ul>
-        <li><h2>Bil: {owner['car']}</h2></li>
-        <li><h2>Ort: {owner['ort']}</h2></li>
-        <li><h2>Ägare: {owner['name']}</h2></li>
-        <li><h2>Födelseår: {owner['birth_year']}</h2></li>
-    </ul>
-    <a href={owner['url']}>Full länk</a>
-</body>
-</html>
-    """
+        <body>
+            <h1>CarOwner</h1>
+            <ul>
+                <li><h2>Reg Nr: {owner['reg']}</h2></li>
+                <li><h2>Bil: {owner['car']}</h2></li>
+                <li><h2>Ort: {owner['ort']}</h2></li>
+                <li><h2>Ägare: {owner['name']}</h2></li>
+                <li><h2>Födelseår: {owner['birth_year']}</h2></li>
+            </ul>
+            <a href={owner['url']}>Full länk</a>
+        </body>
+        </html>
+            """
+        else:
+            polis = ""
+            if "polis" in owner.keys():
+                polis = '<h1 style="color: red;">Detta är en polis!</h1>'
+            out = f"""
+            <!doctype html>
+
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+
+          <title>Car Owner Sweden</title>
+          <meta name="description" content="Car Owner Sweden">
+          <meta name="author" content="SitePoint">
+        </head>
+
+        <body>
+            <h1>CarOwner</h1>
+            {polis}
+            <ul>
+                <li><h2>Reg Nr: {owner['reg']}</h2></li>
+                <li><h2>Bil: {owner['car']}</h2></li>
+                <li><h2>Företag: {owner['name']}</h2></li>
+            </ul>
+            <a href={owner['url']}>Full länk</a>
+        </body>
+        </html>
+            """
+    else:
+        out = owner["null"]
     return out
 
 
@@ -86,10 +134,15 @@ class Server(BaseHTTPRequestHandler):
 
     def handle_http(self):
         if self.path == "/":
-            to_user = "Hello World\n Please use /regnum or /api/regnum"
+            to_user = "Hello World\n Please use /*dittregnr* or /api/*dittregnr*"
         else:
-            to_user = get_owner(self.path.replace("/", ""))
-
+            path = self.path.replace("/", "")
+            if path[:3] == "api":
+                path = path[3:]
+            if len(path) == 6 and path[3:5].isdigit():
+                  to_user = get_owner(path)
+            else:
+                return "Wrong format"
         return to_user
 
 
