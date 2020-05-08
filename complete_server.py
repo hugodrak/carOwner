@@ -70,7 +70,7 @@ def make_html(owner):
             """
         else:
             polis = ""
-            if "polis" in owner.keys():
+            if owner["polis"] == True:
                 polis = '<h1 style="color: red;">Detta är en polis!</h1>'
             out = f"""
             <!doctype html>
