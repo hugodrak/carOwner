@@ -26,16 +26,14 @@ def get_owner(reg_nr: str):
             name = unquote(" ".join(name_split[0:-1]))
             year = name_split[-1]
             car = soup.find_all('h1', {"class": "card-title"})[0].text
-            owner = {'car': car, 'ort': ort, 'name': name, 'birth_year': year, 'url': owner_url, 'reg': reg_nr.upper()}
+            owner = {'polis': polis, 'car': car, 'ort': ort, 'name': name, 'birth_year': year, 'url': owner_url, 'reg': reg_nr.upper()}
         elif splitted[3] == "foretag":
             name_split = splitted[4].split('-')
             if name_split[-1] == "2021000076":
                 polis = True
             name = unquote(" ".join(name_split))
             car = soup.find_all('h1', {"class": "card-title"})[0].text
-            owner = {'car': car, 'name': name, 'url': owner_url, 'reg': reg_nr.upper()}
-            if polis:
-                owner["polis"] = True
+            owner = {'polis': polis, 'car': car, 'name': name, 'url': owner_url, 'reg': reg_nr.upper()}
         else:
             owner = {"null": "null"}
         return owner
